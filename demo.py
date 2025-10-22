@@ -1,16 +1,24 @@
 # 导入模块
 import os
+from datetime import datetime
 import pyJianYingDraft as draft
 from pyJianYingDraft import IntroType, TransitionType, trange, tim
 
-# 设置草稿文件夹
-draft_folder = draft.DraftFolder(r"<你的草稿文件夹>")
+# 设置草稿根文件夹（剪映本地草稿目录）
+root_dir = r"C:\\Users\\lizhao1\\AppData\\Local\\JianyingPro\\User Data\\Projects\\com.lveditor.draft"
+# 生成带时间戳的子文件夹名称 yymmddHHMMSS
+folder_name = f"test1022_{datetime.now().strftime('%y%m%d_%H%M%S')}"
+# 目标草稿完整路径（用于打印提示，不再创建二级 demo 目录）
+target_path = os.path.join(root_dir, folder_name)
+print(target_path)
+# 初始化草稿文件夹管理器，指向剪映草稿根目录
+draft_folder = draft.DraftFolder(root_dir)
 
 tutorial_asset_dir = os.path.join(os.path.dirname(__file__), 'readme_assets', 'tutorial')
 assert os.path.exists(tutorial_asset_dir), f"未找到例程素材文件夹{os.path.abspath(tutorial_asset_dir)}"
 
 # 创建剪映草稿
-script = draft_folder.create_draft("demo", 1920, 1080, allow_replace=True)  # 1920x1080分辨率
+script = draft_folder.create_draft(folder_name, 1920, 1080, allow_replace=True)  # 1920x1080分辨率
 
 # 添加音频、视频和文本轨道
 script.add_track(draft.TrackType.audio).add_track(draft.TrackType.video).add_track(draft.TrackType.text)
@@ -49,6 +57,21 @@ text_segment.add_animation(draft.TextOutro.故障闪动, duration=tim("1s"))  # 
 text_segment.add_bubble("361595", "6742029398926430728")                  # 添加文本气泡效果, 相应素材元数据的获取参见readme中"提取素材元数据"部分
 text_segment.add_effect("7296357486490144036")                            # 添加花字效果, 相应素材元数据的获取参见readme中"提取素材元数据"部分
 script.add_segment(text_segment)
+
+# # 统一裁剪“最终成品”的尾部 3s（只对收尾到成品末尾的轨道进行裁剪）
+# trim_us = tim("3s")
+# # 计算当前成品结束时间（各轨道最后一个片段的最大结束时间）
+# project_end = max(track.end_time for track in script.tracks.values() if len(track.segments) > 0)
+# for track in script.tracks.values():
+#     if len(track.segments) == 0:
+#         continue
+#     last_seg = track.segments[-1]
+#     if last_seg.end == project_end:
+#         cut = min(trim_us, last_seg.duration)
+#         last_seg.duration = last_seg.duration - cut
+
+# # 回写脚本总时长
+# script.duration = max(track.end_time for track in script.tracks.values())
 
 # 保存草稿
 script.save()
